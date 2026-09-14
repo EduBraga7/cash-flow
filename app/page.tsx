@@ -71,6 +71,7 @@ export default function Home() {
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Entry | null>(null);
+  const [duplicateTemplate, setDuplicateTemplate] = useState<Entry | null>(null);
   const [defaultClientName, setDefaultClientName] = useState<string>('');
 
   useEffect(() => {
