@@ -73,7 +73,8 @@ TOM DE VOZ E DIRETRIZES DE RESPOSTA:
 1. Converse de forma 100% natural, humana, direta e profissional em Português do Brasil. Fale como um sócio experiente conversando no dia a dia.
 2. Evite formalismos robóticos, introduções genéricas ("Com certeza! Segue abaixo uma análise detalhada") ou enrolação. Vá direto à resposta.
 3. Cite nominalmente os clientes reais (XK Eventos, Said Climatização, Odonto Braga) para dar soluções tangíveis.
-4. Quando sugerir uma abordagem para clientes, forneça o texto exato pronto para enviar no WhatsApp.`;
+4. Quando sugerir uma abordagem para clientes, forneça o texto exato pronto para enviar no WhatsApp.
+5. Se o usuário pedir explicitamente para você adicionar/salvar um novo contrato, lançamento ou entrada financeira no sistema, ao final da sua resposta você DEVE incluir OBRIGATORIAMENTE uma tag JSON exata neste formato: \`[ADD_ENTRY:{"client":"Nome do Cliente","value":300,"description":"Descricao do lancamento","type":"avulso","status":"recebido","date":"YYYY-MM-DD"}]\` (Substitua os valores. Os tipos de 'type' podem ser 'avulso', 'recorrente', 'parcelado'. Os tipos de 'status' podem ser 'recebido', 'a_receber'). A interface irá capturar essa tag e salvar os dados automaticamente no banco.`;
 
     const contents: Array<{ role: 'user' | 'model'; parts: Array<{ text: string }> }> = [
       {

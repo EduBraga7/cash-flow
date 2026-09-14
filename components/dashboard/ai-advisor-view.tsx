@@ -47,12 +47,10 @@ interface AIAdvisorViewProps {
   clients: ClientProject[];
   tasks: TaskDemand[];
   snippets: SnippetResource[];
+  onSaveEntry?: (input: any) => Promise<void>;
 }
 
 interface ChatMessage {
-  id: string;
-  role: 'user' | 'model';
-  text: string;
   mode?: string;
   createdAt: string;
 }
@@ -218,6 +216,7 @@ export function AIAdvisorView({
   clients,
   tasks,
   snippets,
+  onSaveEntry,
 }: AIAdvisorViewProps) {
   const [activeMode, setActiveMode] = useState<StrategicMode>('mentor_geral');
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -372,10 +371,25 @@ Selecione um Modo Estratégico acima ou clique nas ações rápidas para destrav
         throw new Error(data.error || 'Falha ao consultar a IA.');
       }
 
+      let replyText = data.reply;
+      
+      const addEntryMatch = replyText.match(/\[ADD_ENTRY:(.+?)\]/);
+      if (addEntryMatch) {
+        try {
+          const entryData = JSON.parse(addEntryMatch[1]);
+          if (onSaveEntry) {
+            await onSaveEntry(entryData);
+          }
+          replyText = replyText.replace(/\[ADD_ENTRY:.+?\]/, '').trim();
+        } catch (e) {
+          console.error('Falha ao dar parse no comando ADD_ENTRY:', e);
+        }
+      }
+
       const modelMsg: ChatMessage = {
         id: `model-${Date.now()}`,
         role: 'model',
-        text: data.reply,
+        text: replyText,
         mode,
         createdAt: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
       };

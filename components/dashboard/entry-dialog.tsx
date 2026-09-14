@@ -14,7 +14,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Entry, EntryStatus, EntryType, NewEntryInput, currency, parseLocalDate } from '@/lib/types';
-import { Calendar, Sparkles, CheckCircle2, Clock } from 'lucide-react';
+import { Calendar, Sparkles, CheckCircle2, Clock, Bot, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface EntryDialogProps {
   open: boolean;
@@ -77,6 +78,42 @@ export function EntryDialog({
     val: NewEntryInput[K]
   ) => setForm((f) => ({ ...f, [key]: val }));
 
+  const [aiInput, setAiInput] = useState('');
+  const [isAiLoading, setIsAiLoading] = useState(false);
+
+  const handleAiFill = async () => {
+    if (!aiInput.trim()) return;
+    setIsAiLoading(true);
+    try {
+      const customKey = localStorage.getItem('cf_custom_gemini_key') || undefined;
+      const res = await fetch('/api/ai/advisor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: `Extraia os dados da seguinte entrada financeira: "${aiInput}". \n\nLembre-se da regra 5: Retorne APENAS a tag [ADD_ENTRY:{...}] no final da resposta com os dados estruturados.`,
+          mode: 'mentor_geral',
+          customApiKey: customKey,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      
+      const match = data.reply.match(/\[ADD_ENTRY:(.+?)\]/);
+      if (match) {
+        const parsed = JSON.parse(match[1]);
+        setForm((prev) => ({ ...prev, ...parsed }));
+        toast.success('Campos preenchidos pela IA! Verifique e salve.');
+        setAiInput('');
+      } else {
+        toast.error('A IA não conseguiu extrair os dados. Tente ser mais claro.');
+      }
+    } catch (err: any) {
+      toast.error('Erro na IA: ' + err.message);
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
+
   const handleSave = () => {
     if (!form.description.trim() || form.value <= 0) return;
     onSave(form, editing?.id);
@@ -116,6 +153,34 @@ export function EntryDialog({
         </DialogHeader>
 
         <div className="grid gap-4 py-2">
+          {/* Assistente IA */}
+          {!editing && (
+            <div className="flex flex-col gap-2 rounded-xl border border-primary/20 bg-primary/5 p-3.5 mb-2">
+              <Label className="text-xs font-semibold text-primary flex items-center gap-1.5">
+                <Bot className="h-4 w-4" />
+                Preenchimento Mágico com IA
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Ex: Fechei um contrato anual de 300 reais hoje com a loja do ze..."
+                  className="bg-background text-xs h-9"
+                  value={aiInput}
+                  onChange={(e) => setAiInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAiFill()}
+                  disabled={isAiLoading}
+                />
+                <Button
+                  size="sm"
+                  onClick={handleAiFill}
+                  disabled={isAiLoading || !aiInput.trim()}
+                  className="h-9 w-9 shrink-0 p-0"
+                >
+                  {isAiLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Descrição */}
           <div className="grid gap-2">
             <Label htmlFor="description">Descrição do Serviço / Contrato</Label>

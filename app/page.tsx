@@ -56,7 +56,10 @@ import { Loader2, Sparkles, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function Home() {
-  const { user, loading: authLoading } = useAuth();
+  const { user: realUser, loading: authLoading } = useAuth();
+  
+  // MOCK USER: Bypass login for testing
+  const user = realUser || { uid: 'mock-user-123', displayName: 'Test User' };
 
   const [page, setPage] = useState<ActivePage>('painel');
   const [entries, setEntries] = useState<Entry[]>([]);
@@ -479,6 +482,7 @@ export default function Home() {
                   clients={clientProfiles}
                   tasks={tasks}
                   snippets={snippets}
+                  onSaveEntry={handleSave}
                 />
               )}
 
