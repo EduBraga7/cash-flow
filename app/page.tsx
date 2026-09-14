@@ -159,18 +159,27 @@ export default function Home() {
 
   const handleNew = () => {
     setEditing(null);
+    setDuplicateTemplate(null);
     setDefaultClientName('');
     setDialogOpen(true);
   };
 
   const handleNewEntryForClient = (clientName: string) => {
     setEditing(null);
+    setDuplicateTemplate(null);
     setDefaultClientName(clientName);
     setDialogOpen(true);
   };
 
   const handleEdit = (entry: Entry) => {
     setEditing(entry);
+    setDuplicateTemplate(null);
+    setDialogOpen(true);
+  };
+
+  const handleDuplicate = (entry: Entry) => {
+    setEditing(null);
+    setDuplicateTemplate(entry);
     setDialogOpen(true);
   };
 
@@ -447,6 +456,7 @@ export default function Home() {
                     onEdit={handleEdit}
                     onDelete={handleDelete}
                     onToggleStatus={handleToggleStatus}
+                    onDuplicate={handleDuplicate}
                   />
                 </div>
               )}
@@ -518,6 +528,7 @@ export default function Home() {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         editing={editing}
+        duplicateTemplate={duplicateTemplate}
         defaultClient={defaultClientName}
         clientSuggestions={clientSuggestions}
         onSave={handleSave}

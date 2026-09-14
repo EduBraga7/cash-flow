@@ -21,6 +21,7 @@ interface EntryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   editing: Entry | null;
+  duplicateTemplate?: Entry | null;
   defaultClient?: string;
   clientSuggestions?: string[];
   onSave: (input: NewEntryInput, id?: string) => void;
@@ -48,6 +49,7 @@ export function EntryDialog({
   open,
   onOpenChange,
   editing,
+  duplicateTemplate,
   defaultClient,
   clientSuggestions = [],
   onSave,
@@ -65,13 +67,23 @@ export function EntryDialog({
         date: editing.date.slice(0, 10),
         contractMonths: 1,
       });
+    } else if (duplicateTemplate) {
+      setForm({
+        description: duplicateTemplate.description.replace(/\s\(\d+\/\d+\)$/, ''), // Tira sufuxos como (1/12)
+        client: duplicateTemplate.client,
+        value: duplicateTemplate.value,
+        type: duplicateTemplate.type,
+        status: 'recebido', // Geralmente duplica quando acabou de receber
+        date: getTodayString(), // Novo pagamento com a data de hoje
+        contractMonths: 1, // Geralmente duplica como 1 parcela avulsa ou mensalidade única daquele mês
+      });
     } else {
       setForm({
         ...emptyForm,
         client: defaultClient || '',
       });
     }
-  }, [editing, defaultClient, open]);
+  }, [editing, duplicateTemplate, defaultClient, open]);
 
   const update = <K extends keyof NewEntryInput>(
     key: K,

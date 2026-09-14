@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Pencil, Trash2, Repeat, Zap, CheckCircle2, Clock, ArrowDownUp } from 'lucide-react';
+import { Pencil, Trash2, Repeat, Zap, CheckCircle2, Clock, ArrowDownUp, Copy } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -12,6 +12,7 @@ interface EntriesTableProps {
   onEdit: (entry: Entry) => void;
   onDelete: (id: string) => void;
   onToggleStatus?: (entry: Entry) => void;
+  onDuplicate?: (entry: Entry) => void;
 }
 
 const filters: { key: FilterKey; label: string; dotColor?: string }[] = [
@@ -42,6 +43,7 @@ export function EntriesTable({
   onEdit,
   onDelete,
   onToggleStatus,
+  onDuplicate,
 }: EntriesTableProps) {
   const [filter, setFilter] = useState<FilterKey>('todos');
 
@@ -165,6 +167,18 @@ export function EntriesTable({
                 </td>
                 <td className="px-4 py-3.5">
                   <div className="flex items-center justify-end gap-1 opacity-60 transition-opacity group-hover:opacity-100">
+                    {onDuplicate && (
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 text-muted-foreground hover:text-primary"
+                        onClick={() => onDuplicate(e)}
+                        aria-label="Duplicar para este mês"
+                        title="Duplicar entrada"
+                      >
+                        <Copy className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
                     <Button
                       size="icon"
                       variant="ghost"
