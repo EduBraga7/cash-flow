@@ -51,6 +51,7 @@ import {
   FolderGit2,
   Rocket,
   CheckCircle2,
+  Bot,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -117,6 +118,54 @@ export function ClientsView({
   const [form, setForm] = useState<NewClientProjectInput>(emptyForm);
   const [techInput, setTechInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // AI Assist
+  const [aiInput, setAiInput] = useState('');
+  const [isAiLoading, setIsAiLoading] = useState(false);
+
+  const handleAiFill = async () => {
+    if (!aiInput.trim()) return;
+    setIsAiLoading(true);
+    try {
+      const customKey = localStorage.getItem('cf_custom_gemini_key') || undefined;
+      const prompt = `O usuário quer ${editingId ? 'editar' : 'adicionar'} uma ficha de cliente/projeto.
+Texto do usuário: "${aiInput}".
+${editingId ? `\nDados atuais (atualize o que o usuário pedir e mantenha o resto intacto): ${JSON.stringify(form)} (Techs atuais: ${techInput})` : ''}
+
+Retorne APENAS a tag [ADD_CLIENT:{...}] no final da resposta com os dados estruturados. Formato esperado na tag:
+{"name": "Nome", "category": "comercial" | "portfolio" | "pessoal", "siteUrl": "url", "githubUrl": "url", "phone": "tel", "email": "email", "contractPdfUrl": "url", "notes": "notas", "techStack": ["Tech1", "Tech2"]}
+Não adicione markdown fora da tag.`;
+
+      const res = await fetch('/api/ai/advisor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: prompt,
+          mode: 'mentor_geral',
+          customApiKey: customKey,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      
+      const match = data.reply.match(/\[ADD_CLIENT:(.+?)\]/);
+      if (match) {
+        const parsed = JSON.parse(match[1]);
+        setForm((prev) => ({ ...prev, ...parsed }));
+        if (parsed.techStack && Array.isArray(parsed.techStack)) {
+          setTechInput(parsed.techStack.join(', '));
+        }
+        toast.success('Campos preenchidos pela IA! Verifique e salve.');
+        setAiInput('');
+      } else {
+        toast.error('A IA não conseguiu extrair os dados. Tente ser mais claro.');
+      }
+    } catch (err: any) {
+      toast.error('Erro na IA: ' + err.message);
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
 
   // Dialog de Exclusão
   const [deletingClient, setDeletingClient] = useState<MergedClientProject | null>(null);
@@ -672,6 +721,32 @@ export function ClientsView({
           </DialogHeader>
 
           <div className="grid gap-4 py-2 text-sm">
+            {/* Assistente IA */}
+            <div className="flex flex-col gap-2 rounded-xl border border-primary/20 bg-primary/5 p-3.5 mb-2">
+              <Label className="text-xs font-semibold text-primary flex items-center gap-1.5">
+                <Bot className="h-4 w-4" />
+                Preenchimento Mágico com IA
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder={editingId ? "Ex: Mude a stack para Next.js e Tailwind..." : "Ex: Cliente Barbearia Navalha, site navalha.com.br, tel 11999..."}
+                  className="bg-background text-xs h-9"
+                  value={aiInput}
+                  onChange={(e) => setAiInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAiFill()}
+                  disabled={isAiLoading}
+                />
+                <Button
+                  size="sm"
+                  onClick={handleAiFill}
+                  disabled={isAiLoading || !aiInput.trim()}
+                  className="h-9 w-9 shrink-0 p-0"
+                >
+                  {isAiLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+
             {/* Nome e Categoria */}
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="grid gap-1.5">

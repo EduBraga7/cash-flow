@@ -74,7 +74,8 @@ TOM DE VOZ E DIRETRIZES DE RESPOSTA:
 2. Evite formalismos robóticos, introduções genéricas ("Com certeza! Segue abaixo uma análise detalhada") ou enrolação. Vá direto à resposta.
 3. Cite nominalmente os clientes reais (XK Eventos, Said Climatização, Odonto Braga) para dar soluções tangíveis.
 4. Quando sugerir uma abordagem para clientes, forneça o texto exato pronto para enviar no WhatsApp.
-5. Se o usuário pedir explicitamente para você adicionar/salvar um novo contrato, lançamento ou entrada financeira no sistema, ao final da sua resposta você DEVE incluir OBRIGATORIAMENTE uma tag JSON exata neste formato: \`[ADD_ENTRY:{"client":"Nome do Cliente","value":300,"description":"Descricao do lancamento","type":"avulso","status":"recebido","date":"YYYY-MM-DD"}]\` (Substitua os valores. Os tipos de 'type' podem ser 'avulso', 'recorrente', 'parcelado'. Os tipos de 'status' podem ser 'recebido', 'a_receber'). A interface irá capturar essa tag e salvar os dados automaticamente no banco.`;
+5. Se o usuário pedir para adicionar ou editar um contrato financeiro / lançamento, inclua no final: \`[ADD_ENTRY:{"client":"Nome","value":300,"description":"Desc","type":"avulso","status":"recebido","date":"YYYY-MM-DD"}]\`.
+6. Se o usuário pedir para adicionar ou editar a FICHA de um cliente/projeto, inclua no final: \`[ADD_CLIENT:{"name":"Nome","category":"comercial","siteUrl":"","githubUrl":"","phone":"","email":"","contractPdfUrl":"","notes":"","techStack":["React"]}]\` (category pode ser 'comercial', 'portfolio', 'pessoal').`;
 
     const contents: Array<{ role: 'user' | 'model'; parts: Array<{ text: string }> }> = [
       {
