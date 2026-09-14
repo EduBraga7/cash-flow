@@ -51,6 +51,9 @@ interface AIAdvisorViewProps {
 }
 
 interface ChatMessage {
+  id: string;
+  role: 'user' | 'model';
+  text: string;
   mode?: string;
   createdAt: string;
 }
