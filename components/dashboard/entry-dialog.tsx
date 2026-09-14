@@ -86,11 +86,18 @@ export function EntryDialog({
     setIsAiLoading(true);
     try {
       const customKey = localStorage.getItem('cf_custom_gemini_key') || undefined;
+      const today = getTodayString();
+      const prompt = `O usuário quer ${editing ? 'editar' : 'adicionar'} um lançamento. Hoje é ${today}.
+Texto do usuário: "${aiInput}".
+${editing ? `\nDados atuais (atualize o que o usuário pedir e mantenha o resto): ${JSON.stringify(form)}` : ''}
+
+Lembre-se da regra 5: Retorne APENAS a tag [ADD_ENTRY:{...}] no final da resposta com os dados estruturados. Para 'contractMonths', use 0 para 'Indeterminado' (sem limite de tempo).`;
+
       const res = await fetch('/api/ai/advisor', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: `Extraia os dados da seguinte entrada financeira: "${aiInput}". \n\nLembre-se da regra 5: Retorne APENAS a tag [ADD_ENTRY:{...}] no final da resposta com os dados estruturados.`,
+          message: prompt,
           mode: 'mentor_geral',
           customApiKey: customKey,
         }),
@@ -123,6 +130,13 @@ export function EntryDialog({
   // Cálculo da projeção do contrato
   const contractSummary = useMemo(() => {
     if (form.type !== 'recorrente' || editing) return null;
+    if (form.contractMonths === 0) {
+      return {
+        months: 'Indeterminado',
+        totalContract: 0,
+        periodText: 'A partir de ' + new Date(parseLocalDate(form.date).year, parseLocalDate(form.date).month, parseLocalDate(form.date).day).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' }),
+      };
+    }
     const months = form.contractMonths || 12;
     const totalContract = (form.value || 0) * months;
 
@@ -154,32 +168,30 @@ export function EntryDialog({
 
         <div className="grid gap-4 py-2">
           {/* Assistente IA */}
-          {!editing && (
-            <div className="flex flex-col gap-2 rounded-xl border border-primary/20 bg-primary/5 p-3.5 mb-2">
-              <Label className="text-xs font-semibold text-primary flex items-center gap-1.5">
-                <Bot className="h-4 w-4" />
-                Preenchimento Mágico com IA
-              </Label>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Ex: Fechei um contrato anual de 300 reais hoje com a loja do ze..."
-                  className="bg-background text-xs h-9"
-                  value={aiInput}
-                  onChange={(e) => setAiInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleAiFill()}
-                  disabled={isAiLoading}
-                />
-                <Button
-                  size="sm"
-                  onClick={handleAiFill}
-                  disabled={isAiLoading || !aiInput.trim()}
-                  className="h-9 w-9 shrink-0 p-0"
-                >
-                  {isAiLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                </Button>
-              </div>
+          <div className="flex flex-col gap-2 rounded-xl border border-primary/20 bg-primary/5 p-3.5 mb-2">
+            <Label className="text-xs font-semibold text-primary flex items-center gap-1.5">
+              <Bot className="h-4 w-4" />
+              Preenchimento Mágico com IA
+            </Label>
+            <div className="flex gap-2">
+              <Input
+                placeholder={editing ? "Ex: Mude o valor para 400..." : "Ex: Fechei um contrato anual de 300 reais hoje com a loja do ze..."}
+                className="bg-background text-xs h-9"
+                value={aiInput}
+                onChange={(e) => setAiInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleAiFill()}
+                disabled={isAiLoading}
+              />
+              <Button
+                size="sm"
+                onClick={handleAiFill}
+                disabled={isAiLoading || !aiInput.trim()}
+                className="h-9 w-9 shrink-0 p-0"
+              >
+                {isAiLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              </Button>
             </div>
-          )}
+          </div>
 
           {/* Descrição */}
           <div className="grid gap-2">
@@ -270,7 +282,7 @@ export function EntryDialog({
                   Duração do Contrato
                 </Label>
                 <span className="text-xs font-medium text-emerald-400">
-                  {form.contractMonths || 12} meses
+                  {form.contractMonths === 0 ? 'Tempo Indeterminado' : `${form.contractMonths ?? 12} meses`}
                 </span>
               </div>
 
@@ -278,9 +290,9 @@ export function EntryDialog({
               <div className="grid grid-cols-4 gap-2">
                 {[
                   { label: '6 meses', val: 6 },
-                  { label: '12 meses (1 ano)', val: 12 },
-                  { label: '24 meses (2 anos)', val: 24 },
-                  { label: 'Apenas 1 mês', val: 1 },
+                  { label: '12 meses', val: 12 },
+                  { label: '24 meses', val: 24 },
+                  { label: 'Sem Limite', val: 0 },
                 ].map((item) => (
                   <button
                     key={item.val}
